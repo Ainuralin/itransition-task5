@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: itransition-task5
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 2 --bind 0.0.0.0:$PORT --timeout 180
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: GOOGLE_SHEET_URL
+        sync: false

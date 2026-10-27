@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Weyland-Yutani Mining Analytics</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="#"
+        ><span class="mark">WY</span
+        ><span>WEYLAND-YUTANI<small>MINING OPERATIONS</small></span></a
+      >
+      <div class="top-right">
+        <span class="dot"></span> Resource monitoring<span class="version"
+          >TASK 05</span
+        >
+      </div>
+    </header>
+    <main>
+      <div class="page-heading">
+        <div>
+          <div class="eyebrow">OPERATIONS / PRODUCTION</div>
+          <h1>Mining analytics</h1>
+          <p>Daily production, trends and unusual changes.</p>
+        </div>
+        <button class="button dark" id="report" disabled>
+          ↓ Download PDF report
+        </button>
+      </div>
+      <section class="source-panel">
+        <div>
+          <div class="eyebrow">DATA SOURCE</div>
+          <h2>Google Sheets generator</h2>
+        </div>
+        <form id="source-form">
+          <label class="sr-only" for="sheet-url">Google Sheets link</label
+          ><input
+            id="sheet-url"
+            type="url"
+            placeholder="https://docs.google.com/spreadsheets/d/…"
+            required
+          /><button class="button dark" id="refresh">Connect / refresh</button>
+        </form>
+        <button class="link-button" id="example">Use example data</button>
+        <div id="source-status" class="source-status" role="status">
+          Loading example…
+        </div>
+      </section>
+      <div id="error" class="error" hidden role="alert"></div>
+      <div id="notice" class="notice" hidden></div>
+      <section
+        id="metrics"
+        class="metrics"
+        aria-label="Production summary"
+      ></section>
+      <div class="workspace">
+        <aside class="controls">
+          <div class="eyebrow">ANALYSIS SETTINGS</div>
+          <h2>Detection & trends</h2>
+          <form id="settings-form">
+            <label
+              >Highlight method<select id="method">
+                <option value="any">Any of the four methods</option>
+                <option value="iqr">IQR rule</option>
+                <option value="zscore">Z-score</option>
+                <option value="moving_average">Moving average</option>
+                <option value="grubbs">Grubbs' test</option>
+              </select></label
+            ><label
+              >IQR multiplier<input
+                id="iqr_k"
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value="1.5"
+                required /></label
+            ><label
+              >Z-score threshold<input
+                id="z_threshold"
+                type="number"
+                min="0.1"
+                max="10"
+                step="0.1"
+                value="3"
+                required
+            /></label>
+            <div class="control-pair">
+              <label
+                >Window (days)<input
+                  id="ma_window"
+                  type="number"
+                  min="2"
+                  max="60"
+                  value="7"
+                  required /></label
+              ><label
+                >Deviation (%)<input
+                  id="ma_percent"
+                  type="number"
+                  min="0.1"
+                  max="1000"
+                  step="0.1"
+                  value="40"
+                  required
+              /></label>
+            </div>
+            <label
+              >Grubbs significance α<input
+                id="grubbs_alpha"
+                type="number"
+                min="0.001"
+                max="0.999"
+                step="0.001"
+                value="0.05"
+                required /></label
+            ><label
+              >Polynomial trend<select id="degree">
+                <option value="1">Degree 1 · linear</option>
+                <option value="2">Degree 2 · quadratic</option>
+                <option value="3">Degree 3 · cubic</option>
+                <option value="4">Degree 4 · quartic</option>
+              </select></label
+            ><button id="apply" class="button amber" type="submit">
+              Apply analysis
+            </button>
+          </form>
+          <p class="small-note">
+            The moving average uses only previous days. Grubbs tests one extreme
+            point and assumes approximately normal, independent data.
+          </p>
+        </aside>
+        <div class="main-panel">
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <div class="eyebrow">DAILY PRODUCTION</div>
+                <h2 id="chart-title">Production over time</h2>
+              </div>
+              <div class="chart-selectors">
+                <label
+                  >Series<select id="series">
+                    <option>Total</option>
+                  </select></label
+                ><label
+                  >Chart<select id="chart_type">
+                    <option value="line">Line</option>
+                    <option value="bar">Bar</option>
+                    <option value="stacked">Stacked</option>
+                  </select></label
+                >
+              </div>
+            </div>
+            <div id="chart" class="chart" aria-label="Production chart"></div>
+            <div class="chart-key">
+              <span><i class="key blue"></i> Daily output</span
+              ><span><i class="key amber-key"></i> Polynomial trend</span
+              ><span><i class="key red"></i> Flagged observation</span>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <div class="eyebrow">ALL MINES & TOTAL</div>
+                <h2>Daily statistics</h2>
+              </div>
+              <span class="unit">Tonnes / day</span>
+            </div>
+            <div id="statistics" class="table-wrap"></div>
+          </section>
+        </div>
+      </div>
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow">SELECTED DETECTION METHOD</div>
+            <h2>
+              Flagged observations
+              <span id="anomaly-count" class="count"></span>
+            </h2>
+          </div>
+          <label class="compact"
+            >Filter series<select id="anomaly-series">
+              <option value="all">All series</option>
+            </select></label
+          >
+        </div>
+        <p class="small-note">
+          Flags identify unusual values, not proven equipment failures. The
+          report includes every flagged observation for every mine and the
+          total.
+        </p>
+        <div id="anomalies" class="table-wrap"></div>
+        <div class="pager">
+          <span id="page-label"></span>
+          <div>
+            <button id="prev" class="button small">Previous</button
+            ><button id="next" class="button small">Next</button>
+          </div>
+        </div>
+      </section>
+      <details class="panel methods">
+        <summary>Methods and data notes</summary>
+        <p>
+          Statistics use all loaded dates. Standard deviation uses n − 1;
+          quartiles use linear interpolation. Total is recalculated from the
+          mine columns and checked against the spreadsheet.
+        </p>
+        <p>
+          IQR flags values outside Q1 − k × IQR and Q3 + k × IQR. Z-score flags
+          absolute standardized distances above the selected threshold.
+          Moving-average flags use percentage distance from a full trailing
+          window, excluding the current day. Grubbs is a classic two-sided test
+          for one most extreme value.
+        </p>
+        <p>
+          Production may contain weekly patterns, trends and correlation. These
+          can violate the assumptions of Grubbs' test. Flags are exploratory and
+          no observations are removed.
+        </p>
+        <p>
+          The generator has capacity for 10 mines and 366 days. Refresh reads
+          the Output tab. Analysis and PDF export use the same saved snapshot,
+          so changing spreadsheet inputs does not change an already loaded
+          report.
+        </p>
+      </details>
+      <footer>
+        <span>Ainur Ali · Data Engineering</span
+        ><span id="snapshot-label"></span>
+      </footer>
+    </main>
+    <script src="vendor/plotly.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

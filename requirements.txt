@@ -1,0 +1,9 @@
+Flask>=3.1,<4
+gunicorn>=23,<27
+numpy>=1.26,<3
+pandas>=2.2,<3
+scipy>=1.12,<2
+matplotlib>=3.8,<4
+reportlab>=4,<5
+pytest>=8,<10
+pypdf>=5,<7
